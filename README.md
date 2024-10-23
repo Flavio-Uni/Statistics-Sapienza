@@ -104,3 +104,6 @@ Each of these definitions can be generalized in numerous ways, as indicated abov
 - Combining various statistics (e.g., a mix of mean and median).
 - Creating location measures based on user-defined criteria or specific applications (e.g., socio-economic data analysis).
 - Formulating new metrics utilizing machine learning techniques (e.g., centers based on clustering, outputs from neural networks).
+
+Here is the link to see the code working:
+  http://htmlpreview.github.io/?https://github.com/Flavio-Uni/Statistics-Sapienza/blob/HWK3/hwk3.html
