@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stochastic Simulation with Jumps</title>
+    <style>
+        body {
+            background-color: #2A2A2A;
+            color: #FAFAFA;
+        }
+        .chart-container {
+            width: 100%;
+            min-height: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }        
+        #plotArea {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #FAFAFA;
+            float: left;
+        }
+        .histogram-section, .frequency-section {
+            float: left;
+            margin-left: 25px;
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .control-panel {
+            margin-top: 25px;
+            text-align: center;
+        }
+        .control-panel label, .control-panel input {
+            margin: 12px;
+            font-size: 18px;
+        }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .bar-label {
+            margin-right: 12px;
+            color: #FAFAFA;
+        }
+        .bar-fill-section {
+            background-color: #63C132;
+            height: 24px;
+            text-align: center;
+            line-height: 24px;
+            color: #FFF;
+        }
+        .clear-float {
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <h3>Stochastic Differential Equation Simulation with Random Jumps</h3>
+
+    <div class="chart-container">
+        <canvas id="plotArea"></canvas>
+    </div>
+
+    <div class="control-panel">
+        <label for="num-nodes">Nodes Count (n): </label>
+        <input type="number" id="num-nodes" value="12" min="1" max="40">
+        <label for="num-participants">Participants Count (m): </label>
+        <input type="number" id="num-participants" value="6" min="1" max="40">
+        <label for="rate">Jump Rate (λ): </label>
+        <input type="number" id="rate" step="0.1" value="0.7" min="0" max="12">
+        <label for="num-steps">Subintervals (k): </label>
+        <input type="number" id="num-steps" value="80" min="1">
+        <button onclick="initSimulation()">Start Simulation</button>
+    </div>    
+
+    <div id="histogram-section" class="histogram-section"></div>
+    <div id="frequency-section" class="frequency-section"></div>
+    
+    <div class="clear-float"></div>
+
+    <p id="meanOutput"></p>
+    <p id="varOutput"></p>
+
+    <script>
+        const plotArea = document.getElementById('plotArea');
+        const context = plotArea.getContext('2d');
+
+        let numNodes, numParticipants, rate, numSteps;
+        let currentIteration = 0;
+        let participantResults = [];
+        let participantYPos = [];
+        let freqTrajectory = [];
+        let colorArray = [];
+        let timeStep;
+
+        let movingAvg = 0;
+        let movingVariance = 0;
+
+        function initSimulation() {
+            numNodes = parseInt(document.getElementById('num-nodes').value);
+            numParticipants = parseInt(document.getElementById('num-participants').value);
+            rate = parseFloat(document.getElementById('rate').value);
+            numSteps = parseInt(document.getElementById('num-steps').value);
+            timeStep = 1 / numSteps;
+
+            plotArea.width = Math.floor(document.querySelector('.chart-container').clientWidth * 0.85);
+            plotArea.height = Math.max(600, numParticipants * 45);
+            context.clearRect(0, 0, plotArea.width, plotArea.height);
+
+            drawChartGrid(numNodes, numParticipants);
+
+            currentIteration = 0;
+            participantResults = Array(numParticipants).fill(0);
+            participantYPos = Array(numParticipants).fill(plotArea.height / 2);
+            freqTrajectory = Array(numNodes + 1).fill(0);
+            colorArray = [];
+
+            movingAvg = 0;
+            movingVariance = 0;
+
+            for (let i = 0; i < numParticipants; i++) {
+                colorArray.push(generateRandomColor());
+            }
+
+            refreshDisplay();
+
+            setInterval(nextIteration, 450);
+        }
+
+        function nextIteration() {
+            const nodeWidth = plotArea.width / numNodes;
+            const partHeight = plotArea.height / (2 * numParticipants);
+
+            if (currentIteration >= numNodes) {
+                return;
+            }
+
+            for (let i = 0; i < numParticipants; i++) {
+                let x = currentIteration * nodeWidth;
+                let y = participantYPos[i];
+
+                let nextX = (currentIteration + 1) * nodeWidth;
+                let nextY = y;
+
+                if (Math.random() < rate) { 
+                    participantResults[i] += 1;
+                    nextY -= partHeight;
+                } else {
+                    participantResults[i] = Math.max(participantResults[i] - 1, -numParticipants);
+                    nextY += partHeight;
+                }
+
+                drawTrajectoryLine(x, y, nextX, nextY, colorArray[i]);
+                participantYPos[i] = nextY;
+            }
+
+            currentIteration++;
+            refreshDisplay();
+        }
+
+        function drawChartGrid(numNodes, numParticipants) {
+            const nodeWidth = plotArea.width / numNodes;
+            const partHeight = plotArea.height / (2 * numParticipants);
+
+            context.strokeStyle = '#DDDDDD';
+            context.font = '12px Arial';
+            context.fillStyle = '#DDDDDD';
+
+            for (let i = 0; i <= numNodes; i++) {
+                const xPos = i * nodeWidth;
+                context.beginPath();
+                context.moveTo(xPos, 0);
+                context.lineTo(xPos, plotArea.height);
+                context.stroke();
+                context.fillText(i, xPos + 5, plotArea.height - 10);
+            }
+
+            for (let i = -numParticipants; i <= numParticipants; i++) {
+                const yPos = plotArea.height / 2 - i * partHeight;
+                context.beginPath();
+                context.moveTo(0, yPos);
+                context.lineTo(plotArea.width, yPos);
+                context.stroke();
+                context.fillText(i, 5, yPos - 5);
+            }
+        }
+
+        function drawTrajectoryLine(x1, y1, x2, y2, color) {
+            context.strokeStyle = color;
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2, y2);
+            context.stroke();
+        }
+
+        function generateRandomColor() {
+            const characters = '89ABCDEF01234567';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += characters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function refreshDisplay() {
+            buildHistogram(participantResults);
+            updateFrequency(participantResults);
+
+            const { avg, variance } = calculateStatistics(participantResults);
+            document.getElementById('meanOutput').textContent = `Mean: ${avg.toFixed(2)}`;
+            document.getElementById('varOutput').textContent = `Variance: ${variance.toFixed(2)}`;
+        }
+
+        function buildHistogram(data) {
+            const histogramSection = document.getElementById('histogram-section');
+            histogramSection.innerHTML = ''; 
+
+            data.forEach((level, id) => {
+                const barRow = document.createElement('div');
+                barRow.className = 'bar-row';
+
+                const barLabel = document.createElement('div');
+                barLabel.className = 'bar-label';
+                barLabel.innerText = `Participant ${id}:`;
+
+                const posBarFill = document.createElement('div');
+                posBarFill.className = 'bar-fill-section';
+                posBarFill.style.width = `${Math.max(0, level) * 35}px`;
+                posBarFill.style.backgroundColor = colorArray[id];
+                posBarFill.innerText = level >= 0 ? level : 0;
+
+                const negBarFill = document.createElement('div');
+                negBarFill.className = 'bar-fill-section';
+                negBarFill.style.width = `${Math.abs(Math.min(0, level)) * 35}px`;
+                negBarFill.style.backgroundColor = '#D93B3B';
+                negBarFill.innerText = level < 0 ? Math.abs(level) : '';
+
+                barRow.appendChild(barLabel);
+                barRow.appendChild(negBarFill);
+                barRow.appendChild(posBarFill);
+
+                histogramSection.appendChild(barRow);
+            });
+        }
+
+        function updateFrequency(data) {
+            const freqSection = document.getElementById('frequency-section');
+            freqSection.innerHTML = ''; 
+
+            const freqData = Array(numNodes + 1).fill(0);
+            data.forEach(value => {
+                freqData[Math.min(numNodes, Math.max(0, value))]++;
+            });
+
+            freqData.forEach((count, level) => {
+                const barRow = document.createElement('div');
+                barRow.className = 'bar-row';
+
+                const barLabel = document.createElement('div');
+                barLabel.className = 'bar-label';
+                barLabel.innerText = `Level ${level}:`;
+
+                const barFill = document.createElement('div');
+                barFill.className = 'bar-fill-section';
+                barFill.style.width = `${count * 35}px`;
+                barFill.style.backgroundColor = '#63C132';
+                barFill.innerText = count;
+
+                barRow.appendChild(barLabel);
+                barRow.appendChild(barFill);
+                freqSection.appendChild(barRow);
+            });
+        }
+
+        function calculateStatistics(data) {
+            let total = 0;
+            let totalSquared = 0;
+            data.forEach(value => {
+                total += value;
+                totalSquared += value * value;
+            });
+
+            const avg = total / data.length;
+            const variance = totalSquared / data.length - avg * avg;
+            return { avg, variance };
+        }
+    </script>
+</body>
+</html>
