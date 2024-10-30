@@ -1,4 +1,4 @@
-# Theory: Task 1
+# Theory:
 
 ## Objective
 Explain the concept of statistical independence and draw parallels with its formal definition in probability theory.
@@ -42,5 +42,5 @@ indicating that the probability of `A` remains constant regardless of whether `B
 
 - **Conditional Independence**: In some cases, two events may be independent given a third event. For example, given information that someone exercises regularly, the events of having high blood pressure and being overweight may become conditionally independent based on exercise frequency.
 
----
+Here's the code to see how it works: 
 
