@@ -68,4 +68,9 @@ This indicates there is no linear relationship between `X` and `Y`, though it do
   
 - **Measures of Uncorrelation**: Uncorrelation is often measured using the correlation coefficient `r_XY`. When `r_XY = 0`, the variables are considered uncorrelated.
 
+The code can be seen at the following link: https://htmlpreview.github.io/?https://github.com/Flavio-Uni/Statistics-Sapienza/blob/HWK5/hwk5.html
+
+You can choose and customize the drift and the diffusion for different processes and results depending on different stochastic approaches.
+The single steps are calculated on the aforementioned functions that are going to increment in a deterministic way their values.
+Each information for the steps is generated randomly to achieve the most realistic inherent variability of a C-T process (continuous-time), with the help of drift and diffusion values.
 
