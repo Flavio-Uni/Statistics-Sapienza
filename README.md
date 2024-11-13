@@ -67,4 +67,5 @@ This relationship is essential for working with continuous probability distribut
 
 # Code Demonstration
 The code can be seen and used here: https://htmlpreview.github.io/?https://github.com/Flavio-Uni/Statistics-Sapienza/blob/HWK6/hwk6.html
+
 This code simulates repeated sampling from a given discrete probability distribution, incrementally building an empirical distribution that gradually aligns with the theoretical one. As each sample is drawn according to the specified probabilities, the code updates the observed frequencies for each outcome. The visualization dynamically displays both the theoretical distribution and the current empirical results, allowing you to observe how closely the two distributions match as the sample size increases. Interactive controls let you adjust the number of samples added per step and the update interval, allowing you to control the speed of the convergence process.
