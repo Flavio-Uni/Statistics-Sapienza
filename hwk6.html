@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discrete Probability Simulation</title>
+    <style>
+        body {
+            background-color: #2a2a2a;
+            color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid #444;
+            margin-top: 20px;
+        }
+        #controlPanel {
+            margin-bottom: 20px;
+        }
+        #controlPanel button {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Interactive Discrete Probability Simulation</h1>
+
+    <div id="controlPanel">
+        <label for="samplesPerRun">Samples per Update:</label>
+        <input type="number" id="samplesPerRun" value="100" min="1" max="1000">
+        
+        <label for="updateRate">Update Interval (ms):</label>
+        <input type="number" id="updateRate" value="100" min="10" max="1000">
+        
+        <button onclick="beginSimulation()">Start</button>
+        <button onclick="haltSimulation()">Pause</button>
+        <button onclick="restartSimulation()">Reset</button>
+    </div>
+
+    <canvas id="freqCanvas" width="500" height="300"></canvas>
+    <canvas id="meanVarCanvas" width="500" height="300"></canvas>
+
+    <p>Theoretical Mean: <span id="calcMean"></span>, Theoretical Variance: <span id="calcVariance"></span></p>
+    <p>Sample Mean: <span id="sampleMean">0</span>, Sample Variance: <span id="sampleVariance">0</span></p>
+
+    <script>
+        const outcomes = [1, 2, 3, 4];
+        const probs = [0.15, 0.25, 0.35, 0.25];
+        
+        let theorMean = 0;
+        let theorVariance = 0;
+        
+        for (let j = 0; j < outcomes.length; j++) {
+            theorMean += outcomes[j] * probs[j];
+        }
+        
+        for (let j = 0; j < outcomes.length; j++) {
+            theorVariance += probs[j] * Math.pow(outcomes[j] - theorMean, 2);
+        }
+        
+        document.getElementById("calcMean").textContent = theorMean.toFixed(2);
+        document.getElementById("calcVariance").textContent = theorVariance.toFixed(2);
+
+        const freqCanvas = document.getElementById('freqCanvas');
+        const meanVarCanvas = document.getElementById('meanVarCanvas');
+        const freqCtx = freqCanvas.getContext('2d');
+        const meanVarCtx = meanVarCanvas.getContext('2d');
+
+        let sampleCount = 0;
+        let frequency = Array(outcomes.length).fill(0);
+        let currentMean = 0;
+        let currentVariance = 0;
+        let S2 = 0;
+
+        function sampleFromDistribution() {
+            const rand = Math.random();
+            let cumulativeProb = 0;
+            for (let i = 0; i < probs.length; i++) {
+                cumulativeProb += probs[i];
+                if (rand < cumulativeProb) return outcomes[i];
+            }
+            return outcomes[outcomes.length - 1];
+        }
+
+        function updateStats(newVal) {
+            sampleCount++;
+            const delta = newVal - currentMean;
+            currentMean += delta / sampleCount;
+            S2 += delta * (newVal - currentMean);
+            currentVariance = S2 / sampleCount;
+        }
+
+        function updateFrequency(sample) {
+            const pos = outcomes.indexOf(sample);
+            if (pos !== -1) frequency[pos]++;
+        }
+
+        function drawFrequencyChart() {
+            freqCtx.clearRect(0, 0, freqCanvas.width, freqCanvas.height);
+
+            freqCtx.fillStyle = '#76a5af';
+            const barW = freqCanvas.width / (2 * outcomes.length);
+            for (let i = 0; i < outcomes.length; i++) {
+                const height = probs[i] * freqCanvas.height;
+                freqCtx.fillRect(i * 2 * barW, freqCanvas.height - height, barW, height);
+            }
+
+            freqCtx.fillStyle = '#ff5722';
+            const total = sampleCount;
+            for (let i = 0; i < outcomes.length; i++) {
+                const height = (frequency[i] / total) * freqCanvas.height;
+                freqCtx.fillRect(i * 2 * barW + barW, freqCanvas.height - height, barW, height);
+            }
+        }
+
+        function drawMeanVarChart() {
+            meanVarCtx.clearRect(0, 0, meanVarCanvas.width, meanVarCanvas.height);
+
+            meanVarCtx.strokeStyle = '#76a5af';
+            meanVarCtx.beginPath();
+            meanVarCtx.moveTo(0, meanVarCanvas.height - theorMean / 10 * meanVarCanvas.height);
+            meanVarCtx.lineTo(meanVarCanvas.width, meanVarCanvas.height - theorMean / 10 * meanVarCanvas.height);
+            meanVarCtx.moveTo(0, meanVarCanvas.height - theorVariance / 10 * meanVarCanvas.height);
+            meanVarCtx.lineTo(meanVarCanvas.width, meanVarCanvas.height - theorVariance / 10 * meanVarCanvas.height);
+            meanVarCtx.stroke();
+
+            meanVarCtx.fillStyle = '#ff5722';
+            const xCoord = (sampleCount / 1000) * meanVarCanvas.width;
+            meanVarCtx.fillRect(xCoord, meanVarCanvas.height - (currentMean / 10) * meanVarCanvas.height, 2, 2);
+            meanVarCtx.fillRect(xCoord, meanVarCanvas.height - (currentVariance / 10) * meanVarCanvas.height, 2, 2);
+        }
+
+        function runSimulationStep() {
+            const batchSize = parseInt(document.getElementById("samplesPerRun").value, 10);
+            for (let k = 0; k < batchSize; k++) {
+                const newSample = sampleFromDistribution();
+                updateFrequency(newSample);
+                updateStats(newSample);
+            }
+            drawFrequencyChart();
+            drawMeanVarChart();
+            document.getElementById("sampleMean").textContent = currentMean.toFixed(2);
+            document.getElementById("sampleVariance").textContent = currentVariance.toFixed(2);
+        }
+
+        let simulationInterval;
+        function beginSimulation() {
+            const delay = parseInt(document.getElementById("updateRate").value, 10);
+            if (simulationInterval) clearInterval(simulationInterval);
+            simulationInterval = setInterval(runSimulationStep, delay);
+        }
+
+        function haltSimulation() {
+            clearInterval(simulationInterval);
+        }
+
+        function restartSimulation() {
+            clearInterval(simulationInterval);
+            sampleCount = 0;
+            frequency = Array(outcomes.length).fill(0);
+            currentMean = 0;
+            currentVariance = 0;
+            S2 = 0;
+            drawFrequencyChart();
+            drawMeanVarChart();
+            document.getElementById("sampleMean").textContent = "0";
+            document.getElementById("sampleVariance").textContent = "0";
+        }
+    </script>
+</body>
+</html>
