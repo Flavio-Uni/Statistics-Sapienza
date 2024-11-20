@@ -28,3 +28,5 @@ This document analyzes the properties of modular arithmetic distributions genera
 
 ## Conclusion
 Uniformity and unpredictability are critical for cryptographic systems. This analysis highlights the importance of selecting prime moduli and diverse generators to achieve high-entropy, secure distributions. For practical cryptographic applications, rigorous parameter validation and extensive testing are essential to mitigate vulnerabilities and ensure robustness against attacks.
+
+Here you can see the code in action: https://htmlpreview.github.io/?https://github.com/Flavio-Uni/Statistics-Sapienza/blob/HWK7/hwk7.html
