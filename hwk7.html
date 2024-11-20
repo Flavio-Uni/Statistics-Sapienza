@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Probability Interval Histogram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        canvas {
+            border: 1px solid black;
+            margin: 20px 0;
+            background-color: #fff;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .controls div {
+            margin: 0 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: forestgreen;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: darkgreen;
+        }
+
+        input {
+            padding: 5px;
+            font-size: 14px;
+            width: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Probability Interval Histogram</h1>
+
+        <div class="controls">
+            <div>
+                <label for="draws">Number of Draws:</label>
+                <input type="number" id="draws" value="1000" min="100">
+            </div>
+            <div>
+                <label for="intervals">Number of Intervals:</label>
+                <input type="number" id="intervals" value="7" min="2">
+            </div>
+            <div>
+                <label for="samples">Number of Samples:</label>
+                <input type="number" id="samples" value="4" min="1">
+            </div>
+            <button id="simulateBtn">Simulate</button>
+        </div>
+
+        <canvas id="mainHistogram" width="800" height="400"></canvas>
+        <div id="sampleHistograms"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("mainHistogram");
+        const ctx = canvas.getContext("2d");
+
+        const simulateBtn = document.getElementById("simulateBtn");
+        const drawsInput = document.getElementById("draws");
+        const intervalsInput = document.getElementById("intervals");
+        const samplesInput = document.getElementById("samples");
+        const sampleHistogramsDiv = document.getElementById("sampleHistograms");
+
+        simulateBtn.addEventListener("click", () => {
+            const numberOfDraws = parseInt(drawsInput.value);
+            const numberOfIntervals = parseInt(intervalsInput.value);
+            const numberOfSamples = parseInt(samplesInput.value);
+
+            const intervalBoundaries = generateIntervalBoundaries(numberOfIntervals);
+            const occurrences = simulateDraws(numberOfDraws, numberOfIntervals, intervalBoundaries);
+            drawHistogram(ctx, occurrences, numberOfIntervals, intervalBoundaries, "Main Distribution");
+
+            generateSampleHistograms(
+                numberOfSamples,
+                numberOfDraws,
+                numberOfIntervals,
+                intervalBoundaries
+            );
+        });
+
+        function generateIntervalBoundaries(numberOfIntervals) {
+            const boundaries = [];
+            for (let i = 1; i <= numberOfIntervals; i++) {
+                boundaries.push(i / numberOfIntervals);
+            }
+            return boundaries;
+        }
+
+        function simulateDraws(numberOfDraws, numberOfIntervals, intervalBoundaries) {
+            const occurrences = Array(numberOfIntervals).fill(0);
+            for (let i = 0; i < numberOfDraws; i++) {
+                const randomValue = Math.random();
+                for (let j = 0; j < intervalBoundaries.length; j++) {
+                    if (randomValue <= intervalBoundaries[j]) {
+                        occurrences[j]++;
+                        break;
+                    }
+                }
+            }
+            return occurrences;
+        }
+
+        function drawHistogram(ctx, occurrences, numberOfIntervals, intervalBoundaries, title) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const maxOccurrences = Math.max(...occurrences);
+            const barWidth = canvas.width / numberOfIntervals;
+            const panelHeight = canvas.height;
+
+            ctx.fillStyle = "black";
+            ctx.font = "16px Arial";
+            ctx.fillText(title, 10, 20);
+
+            for (let i = 0; i < numberOfIntervals; i++) {
+                const barHeight = (occurrences[i] / maxOccurrences) * (panelHeight - 100);
+                const barX = i * barWidth;
+                const barY = panelHeight - barHeight - 50;
+
+                // Draw bar
+                ctx.fillStyle = "forestgreen";
+                ctx.fillRect(barX + 5, barY, barWidth - 10, barHeight);
+
+                // Draw label
+                ctx.fillStyle = "black";
+                ctx.fillText(occurrences[i], barX + barWidth / 4, barY - 10);
+                ctx.fillText(`[${(i === 0 ? 0 : intervalBoundaries[i - 1]).toFixed(2)}, ${intervalBoundaries[i].toFixed(2)}]`, barX + 5, panelHeight - 20);
+            }
+        }
+
+        function generateSampleHistograms(numberOfSamples, numberOfDraws, numberOfIntervals, intervalBoundaries) {
+            sampleHistogramsDiv.innerHTML = ""; // Clear previous histograms
+
+            const sampleSize = Math.floor(numberOfDraws / numberOfSamples);
+
+            for (let i = 0; i < numberOfSamples; i++) {
+                const occurrences = simulateDraws(sampleSize, numberOfIntervals, intervalBoundaries);
+
+                const sampleCanvas = document.createElement("canvas");
+                sampleCanvas.width = 400;
+                sampleCanvas.height = 300;
+                const sampleCtx = sampleCanvas.getContext("2d");
+
+                drawHistogram(sampleCtx, occurrences, numberOfIntervals, intervalBoundaries, `Sample ${i + 1}`);
+                sampleHistogramsDiv.appendChild(sampleCanvas);
+            }
+        }
+    </script>
+</body>
+</html>
