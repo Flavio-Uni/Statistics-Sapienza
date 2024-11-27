@@ -42,3 +42,10 @@ includes all integers coprime to \( p \), where \( \phi(p) \) is Euler’s totie
 - **Applications**: Ensuring secure, uniform sequences in modular systems, reducing predictability.
 
 By understanding primitive roots and entropy, we can connect randomness, diversity, and secure number generation across various fields.
+
+Here you can see the code in action: https://htmlpreview.github.io/?https://github.com/Flavio-Uni/Statistics-Sapienza/blob/HWK8/hwk8.html
+The input needed is just a series of letters followed by their number values, for example:
+F: 48293
+C: 23024
+E: 38042 
+...
