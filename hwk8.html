@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Frequency Encryption</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 20px;
+        }
+        h1 {
+            color: #444;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+        .button {
+            padding: 10px 15px;
+            margin: 5px 0;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .frequency-table {
+            display: inline-block;
+            margin: 20px 0;
+        }
+        .frequency-table td {
+            padding: 5px 10px;
+            text-align: center;
+        }
+        .frequency-table th {
+            background-color: #007bff;
+            color: white;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dynamic Frequency Encryption</h1>
+
+    <textarea id="inputText" placeholder="Enter or paste your text here..."></textarea>
+    <button class="button" onclick="encryptText()">Encrypt Text</button>
+
+    <div id="results" class="output">
+        <h2>Results</h2>
+        <div id="originalFrequencies"></div>
+        <div id="encryptedFrequencies"></div>
+        <div id="entropy"></div>
+        <div id="encryptedText"></div>
+    </div>
+
+    <script>
+        function getLetterFrequencies(text) {
+            const frequencies = {};
+            for (const char of text.toUpperCase()) {
+                if (/[A-Z]/.test(char)) {
+                    frequencies[char] = (frequencies[char] || 0) + 1;
+                }
+            }
+            return frequencies;
+        }
+
+        function displayFrequencies(title, frequencies) {
+            let tableHTML = `<h3>${title}</h3><table class="frequency-table"><tr><th>Letter</th><th>Frequency</th></tr>`;
+            const sortedKeys = Object.keys(frequencies).sort();
+            for (const key of sortedKeys) {
+                tableHTML += `<tr><td>${key}</td><td>${frequencies[key]}</td></tr>`;
+            }
+            tableHTML += '</table>';
+            return tableHTML;
+        }
+
+        function caesarCipher(text, shift) {
+            return text.split('').map(char => {
+                if (/[A-Za-z]/.test(char)) {
+                    const base = char.charCodeAt(0) < 97 ? 65 : 97;
+                    return String.fromCharCode(((char.charCodeAt(0) - base + shift) % 26) + base);
+                }
+                return char;
+            }).join('');
+        }
+
+        function calculateEntropy(frequencies) {
+            const total = Object.values(frequencies).reduce((sum, count) => sum + count, 0);
+            let entropy = 0;
+            for (const count of Object.values(frequencies)) {
+                const probability = count / total;
+                if (probability > 0) {
+                    entropy -= probability * Math.log2(probability);
+                }
+            }
+            return entropy.toFixed(4);
+        }
+
+        function encryptText() {
+            const inputText = document.getElementById("inputText").value;
+            if (!inputText.trim()) {
+                alert("Please enter some text to analyze!");
+                return;
+            }
+
+            // Step 1: Calculate original frequencies
+            const originalFrequencies = getLetterFrequencies(inputText);
+            document.getElementById("originalFrequencies").innerHTML =
+                displayFrequencies("Original Letter Frequencies", originalFrequencies);
+
+            // Step 2: Encrypt text using Caesar Cipher
+            const shift = Math.floor(Math.random() * 25) + 1;
+            const encryptedText = caesarCipher(inputText, shift);
+
+            // Step 3: Calculate encrypted frequencies
+            const encryptedFrequencies = getLetterFrequencies(encryptedText);
+            document.getElementById("encryptedFrequencies").innerHTML =
+                displayFrequencies(`Encrypted Letter Frequencies (Shift: ${shift})`, encryptedFrequencies);
+
+            // Step 4: Display encrypted text
+            document.getElementById("encryptedText").innerHTML =
+                `<h3>Encrypted Text (Shift: ${shift})</h3><p>${encryptedText}</p>`;
+
+            // Step 5: Calculate entropy for both original and encrypted text
+            const originalEntropy = calculateEntropy(originalFrequencies);
+            const encryptedEntropy = calculateEntropy(encryptedFrequencies);
+            document.getElementById("entropy").innerHTML =
+                `<h3>Shannon Entropy</h3><p>Original Text: ${originalEntropy}</p><p>Encrypted Text: ${encryptedEntropy}</p>`;
+        }
+    </script>
+</body>
+</html>
