@@ -52,4 +52,8 @@ The LLN is a powerful tool in cybersecurity, aiding in the detection, analysis, 
 
 By leveraging the properties of the sample mean and the law of large numbers, cybersecurity professionals can build robust, data-driven strategies for risk management, anomaly detection, and cryptographic security.
 
+![grafico hwk9](https://github.com/user-attachments/assets/664b12d0-e6d4-4f4a-9426-225910e03a0d)
+
+
 Here you can see the code in action: https://htmlpreview.github.io/?https://github.com/Flavio-Uni/Statistics-Sapienza/blob/HWK9/hwk9.html
+(Sometimes the online preview works, sometimes it does not idk why)
