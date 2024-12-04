@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation: Variance Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #808080; /* Set background color to grey */
+            color: #ffffff;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #ff9900; /* Set header text color to match the graph */
+        }
+        canvas {
+            width: 600px!important;
+            height: auto;
+            margin: 20px auto;
+        }
+        .centered {
+            text-align: center;
+        }
+        .input-label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .input-field {
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .button {
+            padding: 10px 20px;
+            background-color: #ff9900; /* Button color orange */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #e68a00; /* Slightly darker orange for hover effect */
+        }
+        #resultsContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #statsDisplay {
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #ffffff;
+            border: 2px solid #d0d6dc;
+            border-radius: 10px;
+            padding: 15px;
+            color: #333; /* Dark text on light background */
+            display: inline-block;
+        }
+        .value-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .value-item {
+            margin: 0 15px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1>Simulation: Variance Analysis</h1>
+
+    <div class="centered">
+        <label class="input-label" for="numSamples">Number of Samples (m):</label>
+        <input type="number" id="numSamples" class="input-field" value="1000" min="1" step="1"><br>
+        
+        <label class="input-label" for="sampleSize">Sample Size (n):</label>
+        <input type="number" id="sampleSize" class="input-field" value="100" min="1" step="1"><br>
+
+        <button id="generateButton" class="button">Run Simulation</button>
+    </div>
+
+    <div id="resultsContainer">
+        <h3>Simulation Results</h3>
+        <div id="statsDisplay">
+            Results for Mean and Variance will appear here.
+        </div>
+    </div>
+
+    <div id="chartContainer" class="centered">
+        <canvas id="varianceChart"></canvas>
+    </div>
+
+    <script>
+        let varianceGraph = null;
+        const sampleMeans = [];
+        const sampleVariances = [];
+        const sampleValues = [0, 1, 2, 3, 4];
+        const probDistribution = [0.2, 0.1, 0.3, 0.1, 0.3];
+
+        document.getElementById('generateButton').addEventListener('click', () => {
+            const sampleSize = parseInt(document.getElementById('sampleSize').value);
+            const numSamples = parseInt(document.getElementById('numSamples').value);
+
+            sampleMeans.length = 0;
+            sampleVariances.length = 0;
+
+            for (let i = 0; i < numSamples; i++) {
+                generateSampleStats(sampleSize);
+            }
+
+            const avgVariance = calculateMean(sampleVariances);
+            const varianceOfVariances = calculateVariance(sampleVariances);
+
+            displayResults(avgVariance, varianceOfVariances);
+            renderChart();
+        });
+
+        function generateSampleStats(size) {
+            const samples = [];
+            for (let i = 0; i < size; i++) {
+                samples.push(drawFromDistribution());
+            }
+
+            const mean = calculateMean(samples);
+            const variance = calculateVariance(samples);
+
+            sampleMeans.push(mean);
+            sampleVariances.push(variance);
+        }
+
+        function drawFromDistribution() {
+            const rand = Math.random();
+            let cumulativeProbability = 0;
+
+            for (let i = 0; i < probDistribution.length; i++) {
+                cumulativeProbability += probDistribution[i];
+                if (rand < cumulativeProbability) {
+                    return sampleValues[i];
+                }
+            }
+            return sampleValues[sampleValues.length - 1];
+        }
+
+        function calculateMean(arr) {
+            const sum = arr.reduce((total, val) => total + val, 0);
+            return sum / arr.length;
+        }
+
+        function calculateVariance(arr) {
+            const mean = calculateMean(arr);
+            const sumSquaredDiffs = arr.reduce((total, val) => total + Math.pow(val - mean, 2), 0);
+            return sumSquaredDiffs / arr.length;
+        }
+
+        function displayResults(avgVariance, varOfVar) {
+            const theoreticalMean = calculateMean(sampleValues.map((v, i) => v * probDistribution[i]));
+            const theoreticalVariance = probDistribution.reduce((sum, p, i) => 
+                sum + p * Math.pow(sampleValues[i] - theoreticalMean, 2), 0);
+
+            document.getElementById('statsDisplay').innerHTML = `
+                <div class="value-row">
+                    <div class="value-item"><strong>Theoretical Mean:</strong> ${theoreticalMean.toFixed(2)}</div>
+                    <div class="value-item"><strong>Theoretical Variance:</strong> ${theoreticalVariance.toFixed(2)}</div>
+                </div>
+                <div class="value-row">
+                    <div class="value-item"><strong>Avg Variance (Empirical):</strong> ${avgVariance.toFixed(2)}</div>
+                    <div class="value-item"><strong>Variance of Variances:</strong> ${varOfVar.toFixed(2)}</div>
+                </div>
+            `;
+        }
+
+        function renderChart() {
+            const chartCtx = document.getElementById('varianceChart').getContext('2d');
+            const varianceCount = {};
+
+            sampleVariances.sort((a, b) => a - b);
+            sampleVariances.forEach(v => {
+                varianceCount[v.toFixed(2)] = (varianceCount[v.toFixed(2)] || 0) + 1;
+            });
+
+            const chartData = {
+                labels: Object.keys(varianceCount),
+                datasets: [{
+                    label: 'Variance Distribution',
+                    data: Object.values(varianceCount),
+                    backgroundColor: 'rgba(255, 165, 0, 0.2)', /* Orange background */
+                    borderColor: 'rgba(255, 165, 0, 1)', /* Orange border */
+                    borderWidth: 1
+                }]
+            };
+
+            if (varianceGraph) {
+                varianceGraph.destroy();
+            }
+
+            varianceGraph = new Chart(chartCtx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Variance Values'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Frequency'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
