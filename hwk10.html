@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lebesgue vs Riemann Integration</title>
+  <style>
+    /* Change the background color of the page to grey */
+    body {
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+      color: #333;
+      text-align: center;
+      padding: 20px;
+    }
+
+    button {
+      background-color: #1f77b4;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #ff7f0e;
+    }
+
+    #results {
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+  <script>
+    // Define the function to integrate
+    function f(x) {
+      return Math.pow(x, 2); // Example function: f(x) = x^2
+    }
+
+    // Riemann Integral Approximation
+    function riemannIntegral(a, b, n) {
+      const deltaX = (b - a) / n; // Width of each subinterval
+      let sum = 0;
+      
+      // Approximate by summing rectangles
+      for (let i = 0; i < n; i++) {
+        const x_i = a + i * deltaX; // Choose points in the left end of each subinterval
+        sum += f(x_i) * deltaX;
+      }
+      
+      return sum;
+    }
+
+    // Lebesgue Integral Approximation (using Monte Carlo sampling)
+    function lebesgueIntegral(a, b, n) {
+      let sum = 0;
+
+      // Randomly sample points in the range [a, b]
+      for (let i = 0; i < n; i++) {
+        const randomX = a + (b - a) * Math.random(); // Random x in [a, b]
+        sum += f(randomX);
+      }
+
+      return (sum / n) * (b - a); // Average function values times the length of the interval
+    }
+
+    // Generate random values for a, b, and n to change the results
+    function generateRandomValues() {
+      const a = Math.random() * 5;  // Random lower bound between 0 and 5
+      const b = a + Math.random() * (5 - a);  // Upper bound is always greater than lower bound
+      const n = Math.floor(Math.random() * 20000) + 10000;  // Random number of intervals between 10000 and 30000
+      
+      return { a, b, n };
+    }
+
+    // Main function to compare both methods
+    function compareIntegrals() {
+      // Generate new random values for a, b, and n
+      const { a, b, n } = generateRandomValues();
+
+      // Compute integrals using the random values
+      const riemannResult = riemannIntegral(a, b, n);
+      const lebesgueResult = lebesgueIntegral(a, b, n);
+
+      // Display results
+      document.getElementById("riemannResult").textContent = `Riemann Integral: ${riemannResult.toFixed(6)} (a=${a.toFixed(2)}, b=${b.toFixed(2)}, n=${n})`;
+      document.getElementById("lebesgueResult").textContent = `Lebesgue Integral: ${lebesgueResult.toFixed(6)} (a=${a.toFixed(2)}, b=${b.toFixed(2)}, n=${n})`;
+    }
+
+    // Initialize page with default values when loaded
+    window.onload = function() {
+      // Set default values when page is loaded
+      const defaultA = 0;
+      const defaultB = 1;
+      const defaultN = 10000;
+
+      const defaultRiemann = riemannIntegral(defaultA, defaultB, defaultN);
+      const defaultLebesgue = lebesgueIntegral(defaultA, defaultB, defaultN);
+      document.getElementById("riemannResult").textContent = `Riemann Integral: ${defaultRiemann.toFixed(6)} (a=${defaultA}, b=${defaultB}, n=${defaultN})`;
+      document.getElementById("lebesgueResult").textContent = `Lebesgue Integral: ${defaultLebesgue.toFixed(6)} (a=${defaultA}, b=${defaultB}, n=${defaultN})`;
+    }
+  </script>
+</head>
+<body>
+  <h1>Numerical Comparison of Lebesgue and Riemann Integrals</h1>
+
+  <!-- Button to execute the integration and comparison -->
+  <button onclick="compareIntegrals()">Compute Integrals</button>
+
+  <!-- Display results -->
+  <div id="results">
+    <p id="riemannResult">Riemann Integral: Calculating...</p>
+    <p id="lebesgueResult">Lebesgue Integral: Calculating...</p>
+  </div>
+</body>
+</html>
