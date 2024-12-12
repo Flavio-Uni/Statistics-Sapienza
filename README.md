@@ -43,3 +43,4 @@ The Lebesgue–Stieltjes integral is a sophisticated extension of the traditiona
    - Widely used in fields like stochastic processes, functional analysis, and financial mathematics, where traditional integration methods often fall short.  
 
 The Lebesgue–Stieltjes integral stands as a cornerstone of modern mathematical analysis, enhancing our ability to describe and compute in both theoretical and applied contexts.
+Here you can find the link to see the code in action to compare the results of two different kind of integrals such as Riemann and Lebesgue:https://htmlpreview.github.io/?https://github.com/Flavio-Uni/Statistics-Sapienza/blob/HWK10/hwk10.html
